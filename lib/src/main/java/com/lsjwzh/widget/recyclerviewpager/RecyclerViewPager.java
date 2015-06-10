@@ -125,6 +125,8 @@ public class RecyclerViewPager extends RecyclerView {
     @Override
     @Deprecated
     public void setOnScrollListener(@Nullable OnScrollListener listener) {
+        if (mOnScrollListener == listener) return;
+
         if (mOnScrollListener != null){
             super.removeOnScrollListener(mOnScrollListener);
         }
@@ -248,7 +250,7 @@ public class RecyclerViewPager extends RecyclerView {
                 int targetPosition = getLayoutManager().canScrollHorizontally() ? ViewUtils.getCenterXChildPosition(recyclerView) :
                         ViewUtils.getCenterYChildPosition(recyclerView);
                 if (mCurView != null) {
-                    targetPosition = recyclerView.getChildPosition(mCurView);
+                    targetPosition = recyclerView.getChildLayoutPosition(mCurView);
                     if (getLayoutManager().canScrollHorizontally()) {
                         int spanX = mCurView.getLeft() - mLeft;
                         if (spanX > mCurView.getWidth() * mTriggerOffset) {
