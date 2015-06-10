@@ -124,7 +124,7 @@ public class RecyclerViewPager extends RecyclerView {
 
     @Override
     @Deprecated
-    public void setOnScrollListener(@Nullable OnScrollListener listener) {
+    public final void setOnScrollListener(@Nullable OnScrollListener listener) {
         if (mOnScrollListener == listener) return;
 
         if (mOnScrollListener != null){
