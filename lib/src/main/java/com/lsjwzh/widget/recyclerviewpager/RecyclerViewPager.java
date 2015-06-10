@@ -5,6 +5,7 @@ import java.lang.reflect.Field;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.os.Parcelable;
+import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.ViewUtils;
 import android.util.AttributeSet;
@@ -19,9 +20,10 @@ import android.view.View;
 public class RecyclerViewPager extends RecyclerView {
 
     private RecyclerViewPagerAdapter<?> mViewPagerAdapter;
+    @Deprecated
     private OnScrollListener mOnScrollListener;
-    private float mTriggerOffset = 0.25f;
-    private float mFlingFactor = 0.15f;
+    private float mTriggerOffset;
+    private float mFlingFactor;
     private float mTouchSpan;
     private final OnScrollListener mWrapperScrollListener = new ScrollListener();
 
@@ -66,11 +68,17 @@ public class RecyclerViewPager extends RecyclerView {
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         super.addOnScrollListener(mWrapperScrollListener);
+        if (mOnScrollListener != null){
+            super.addOnScrollListener(mOnScrollListener);
+        }
     }
 
     @Override
     protected void onDetachedFromWindow() {
         super.removeOnScrollListener(mWrapperScrollListener);
+        if (mOnScrollListener != null){
+            super.removeOnScrollListener(mOnScrollListener);
+        }
         super.onDetachedFromWindow();
     }
 
@@ -115,8 +123,17 @@ public class RecyclerViewPager extends RecyclerView {
     }
 
     @Override
-    public void setOnScrollListener(OnScrollListener listener) {
+    @Deprecated
+    public void setOnScrollListener(@Nullable OnScrollListener listener) {
+        if (mOnScrollListener != null){
+            super.removeOnScrollListener(mOnScrollListener);
+        }
+
         mOnScrollListener = listener;
+
+        if (mOnScrollListener != null) {
+            super.addOnScrollListener(mOnScrollListener);
+        }
     }
 
     @Override
@@ -141,13 +158,12 @@ public class RecyclerViewPager extends RecyclerView {
         int childCount = getChildCount();
         if (childCount > 0) {
             int curPosition = ViewUtils.getCenterXChildPosition(this);
-            int childWidth = getWidth() - getPaddingLeft() - getPaddingRight();
+            View centerXChild = ViewUtils.getCenterXChild(this);
+            int childWidth = centerXChild != null ? centerXChild.getWidth() : getWidth() - getPaddingLeft() - getPaddingRight();
             int flingCount = (int) (velocityX * mFlingFactor / childWidth);
             int targetPosition = curPosition + flingCount;
-            targetPosition = Math.max(targetPosition, 0);
-            targetPosition = Math.min(targetPosition, getAdapter().getItemCount() - 1);
+            targetPosition = safeTargetPosition(targetPosition, getAdapter().getItemCount());
             if (targetPosition == curPosition) {
-                View centerXChild = ViewUtils.getCenterXChild(this);
                 if (centerXChild != null) {
                     if (mTouchSpan > centerXChild.getWidth() * mTriggerOffset * mTriggerOffset && targetPosition != 0) {
                         targetPosition--;
@@ -169,13 +185,12 @@ public class RecyclerViewPager extends RecyclerView {
         int childCount = getChildCount();
         if (childCount > 0) {
             int curPosition = ViewUtils.getCenterYChildPosition(this);
-            int childHeight = getHeight() - getPaddingTop() - getPaddingBottom();
+            View centerYChild = ViewUtils.getCenterYChild(this);
+            int childHeight = centerYChild != null ? centerYChild.getHeight() : getHeight() - getPaddingTop() - getPaddingBottom();
             int flingCount = (int) (velocityY * mFlingFactor / childHeight);
             int targetPosition = curPosition + flingCount;
-            targetPosition = Math.max(targetPosition, 0);
-            targetPosition = Math.min(targetPosition, getAdapter().getItemCount() - 1);
+            targetPosition = safeTargetPosition(targetPosition, getAdapter().getItemCount());
             if (targetPosition == curPosition) {
-                View centerYChild = ViewUtils.getCenterYChild(this);
                 if (centerYChild != null) {
                     if (mTouchSpan > centerYChild.getHeight() * mTriggerOffset && targetPosition != 0) {
                         targetPosition--;
@@ -253,18 +268,7 @@ public class RecyclerViewPager extends RecyclerView {
                 smoothScrollToPosition(safeTargetPosition(targetPosition,getAdapter().getItemCount()));
                 mCurView = null;
             }
-            if (mOnScrollListener != null) {
-                mOnScrollListener.onScrollStateChanged(recyclerView, newState);
-            }
         }
-
-        @Override
-        public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-            if (mOnScrollListener != null) {
-                mOnScrollListener.onScrolled(recyclerView, dx, dy);
-            }
-        }
-
     }
 
 
